@@ -10,12 +10,12 @@ public class Device {
     }
 
     public void process(Transaction transaction) {
-        //View.submitOutputTask("Device - " + deviceName + " thread "+ Thread.currentThread().getName() + " STARTED " + transaction);
+        View.submitOutputTask("Device - " + deviceName + " thread "+ Thread.currentThread().getName() + " STARTED " + transaction);
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        //View.submitOutputTask("Device - " + deviceName + " thread "+ Thread.currentThread().getName() + " FINISHED " + transaction);
+        View.submitOutputTask("Device - " + deviceName + " thread "+ Thread.currentThread().getName() + " FINISHED " + transaction);
     }
 }

@@ -41,7 +41,7 @@ public class Transaction implements Runnable {
 //            }
 //        }
 
-       // View.submitOutputTask("Transaction " + tnumber + " thread " + Thread.currentThread().getName() + " - is Done");
+        View.submitOutputTask("Transaction " + tnumber + " thread " + Thread.currentThread().getName() + " - is Done");
     }
 
     @Override
