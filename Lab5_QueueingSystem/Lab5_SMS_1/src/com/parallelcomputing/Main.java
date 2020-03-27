@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 public class Main {
     public static final int TRANSACTION_NUMBER = 100;
 
-    private static final int MODELLING_LAUNCH_NUMBER = 1;
+    private static final int MODELLING_LAUNCH_NUMBER = 2;
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(MODELLING_LAUNCH_NUMBER);
 
     public static void main(String[] args) {

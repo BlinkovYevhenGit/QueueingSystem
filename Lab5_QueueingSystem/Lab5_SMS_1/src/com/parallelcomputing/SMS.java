@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class SMS {
 
-    private static final int DEVICE_NUMBER = 10;
+    private static final int DEVICE_NUMBER = 20;
 
     private final QueueStat queueStat;
 
@@ -19,6 +19,7 @@ class SMS {
     private final ThreadLocal<Device> devices;
     private final ThreadPoolExecutor deviceExecutor;
     private final AtomicInteger deviceNumber = new AtomicInteger();
+    private final Object updateLocker = new Object();
 
     SMS(int transactionQuantity) {
         this.transactionQuantity = transactionQuantity;
@@ -53,30 +54,32 @@ class SMS {
     }
 
     public Future<?> submitToQueue(Transaction transaction) {
-        updateQueueLengthAndSend(transaction, ": ВХІД в чергу - кількість транзактів: ",true);
+        updateQueueLengthAndSend(transaction, ": ВХІД в чергу - кількість транзактів, яка перебувала в черзі: ",true);
         try {
 
             Future<?> submit = deviceExecutor.submit(() -> {
-                updateQueueLengthAndSend(transaction, " :ВИХІД з черги - кількість транзактів в черзі:",true);
+                updateQueueLengthAndSend(transaction, " :ВИХІД з черги - кількість транзактів, яка перебувала в черзі:",true);
                 Device device = devices.get();
 
                 device.process(transaction);
             });
             return submit;
         } catch (RejectedExecutionException e) {
-            View.submitOutputTask("Thread - " + transaction + " hasn't entered the queue, because it is overloaded.");
-            updateQueueLengthAndSend(transaction, " :ВИХІД з СМО - кількість транзактів в черзі:", false);
+            //View.submitOutputTask("Потік - " + transaction + " не ввійшов у чергу, оскільки вона переповнена.");
+            updateQueueLengthAndSend(transaction, " :ВИХІД з СМО - кількість транзактів, яка перебувала в черзі:", false);
             result.incDenyingNumber();
             return null;
         }
 
     }
 
-    private synchronized void updateQueueLengthAndSend(Transaction transaction, String s, boolean updateStatistics) {
-        AtomicInteger queueLength = new AtomicInteger(deviceExecutor.getQueue().size());
-        if(updateStatistics)queueStat.updateQueueStat(queueLength.get());
+    private void updateQueueLengthAndSend(Transaction transaction, String s, boolean updateStatistics) {
+        synchronized (updateLocker){
+            AtomicInteger queueLength = new AtomicInteger(deviceExecutor.getQueue().size());
+            if(updateStatistics)queueStat.updateQueueStat(queueLength.get());
 
-        View.submitOutputTask(transaction + s + queueLength.get());
+            //View.submitOutputTask(transaction + s + queueLength.get());
+        }
     }
 
     private double countAverageNumberOfTransactsInQueue(long totalTime) {
