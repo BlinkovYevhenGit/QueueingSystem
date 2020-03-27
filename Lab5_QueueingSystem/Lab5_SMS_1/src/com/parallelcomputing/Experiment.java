@@ -13,7 +13,7 @@ public class Experiment implements Supplier<Result> {
 
     public Experiment(int transactionNumber) {
         this.transactionNumber = transactionNumber;
-        this.service = Executors.newScheduledThreadPool(5);//if we want to generate transactions in parallel then > 1
+        this.service = Executors.newScheduledThreadPool(transactionNumber);//if we want to generate transactions in parallel then > 1
     }
 
     public Result get() {
@@ -23,7 +23,7 @@ public class Experiment implements Supplier<Result> {
         List<ScheduledFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < this.transactionNumber; i++) {
             Transaction transaction = new Transaction(sms, i);
-            ScheduledFuture<?> scheduledFuture = service.schedule(transaction, i * 100, TimeUnit.MILLISECONDS);
+            ScheduledFuture<?> scheduledFuture = service.schedule(transaction, i * 120, TimeUnit.MILLISECONDS);
             futures.add(scheduledFuture);
         }
         for (ScheduledFuture<?> future : futures) {

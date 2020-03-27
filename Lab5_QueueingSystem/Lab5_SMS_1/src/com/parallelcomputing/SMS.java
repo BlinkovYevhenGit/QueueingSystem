@@ -7,16 +7,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class SMS {
 
-    private static final int DEVICE_NUMBER = 1;
+    private static final int DEVICE_NUMBER = 10;
 
     private final QueueStat queueStat;
 
     private final Result result;
     private final int transactionQuantity;
 
-    private final Object deviceLock = new Object();
 
-    private boolean isFree = true;
 
     private final ThreadLocal<Device> devices;
     private final ThreadPoolExecutor deviceExecutor;
@@ -54,30 +52,34 @@ class SMS {
         return result;
     }
 
-    public void submitToQueue(Transaction transaction) {
-        int queueLength = deviceExecutor.getQueue().size();
-        queueStat.updateQueueStat(queueLength);
-        View.submitOutputTask("ВХІД в чергу - кількість транзактів: "+queueLength);
+    public Future<?> submitToQueue(Transaction transaction) {
+        AtomicInteger queueLength = new AtomicInteger(deviceExecutor.getQueue().size());
+        queueStat.updateQueueStat(queueLength.get());
+        //View.submitOutputTask("ВХІД в чергу - кількість транзактів: "+queueLength);
         try {
 
-
-            deviceExecutor.submit(() -> {
+            Future<?> submit = deviceExecutor.submit(() -> {
                 Device device = devices.get();
 
                 device.process(transaction);
 
-                int queueLengthAfterCurrentTransactFinish = deviceExecutor.getQueue().size()-1;
-                queueStat.updateQueueStat(queueLengthAfterCurrentTransactFinish);
-                View.submitOutputTask("ВИХІД з черги - кількість транзактів в черзі:"+queueLengthAfterCurrentTransactFinish);
-
+                AtomicInteger queueLengthAfterCurrentTransactFinish = new AtomicInteger(deviceExecutor.getQueue().size());
+                queueStat.updateQueueStat(queueLengthAfterCurrentTransactFinish.get());
+                //View.submitOutputTask("ВИХІД з черги - кількість транзактів в черзі:" + queueLengthAfterCurrentTransactFinish.get());
+//                synchronized (transaction.threadLocker){
+//                    transaction.isReady=true;
+//                    transaction.threadLocker.notify();
+//                }
             });
-
+            return submit;
         } catch (RejectedExecutionException e) {
-            View.submitOutputTask("Thread - " + Thread.currentThread().getName() + " hasn't entered the queue, because it is overloaded.");
-            View.submitOutputTask("ВИХІД з СМО - кількість транзактів в черзі:"+deviceExecutor.getQueue().size());
+           // View.submitOutputTask("Thread - " + Thread.currentThread().getName() + " hasn't entered the queue, because it is overloaded.");
+            //View.submitOutputTask("ВИХІД з СМО - кількість транзактів в черзі:"+deviceExecutor.getQueue().size());
 
             result.incDenyingNumber();
+            return null;
         }
+
     }
 
     private double countAverageNumberOfTransactsInQueue(long totalTime) {

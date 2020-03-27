@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
-    public static final int TRANSACTION_NUMBER = 5;
+    public static final int TRANSACTION_NUMBER = 100;
 
     private static final int MODELLING_LAUNCH_NUMBER = 1;
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(MODELLING_LAUNCH_NUMBER);
